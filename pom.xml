@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+    </parent>
+
+    <groupId>com.gamerstore</groupId>
+    <artifactId>GamerStore</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>GamerStore</name>
+    <description>Projeto principal da arquitetura de microsserviços GamerStore</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <modules>        
+        <module>gamerstore-shared</module>
+        <module>api_gateway</module>
+        <module>user_service</module>
+        <module>product_service</module>
+        <module>cart_service</module>
+        <module>shipping_service</module>
+        <module>payment_service</module>   
+        <module>order_service</module>   
+        <module>email_service</module>   
+    </modules>
+
+</project>

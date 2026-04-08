@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: email_service
+
+  rabbitmq:
+    addresses: ${RABBITMQ_PRIVATE_URL}
+
+brevo:
+  api:
+    url: https://api.brevo.com/v3/smtp/email
+    key: ${BREVO_API_KEY}
+  email:
+    from: service.gamerstore@gmail.com
+    name: GamerStore

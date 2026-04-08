@@ -1,0 +1,13 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: order_service
+
+  data:
+    mongodb:
+      uri: ${MONGO_URL}/gamerstore-orders?authSource=admin
+
+  rabbitmq:
+    addresses: ${RABBITMQ_PRIVATE_URL}

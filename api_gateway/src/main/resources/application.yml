@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: api_gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: https://userservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - RewritePath=/user-service/(?<segment>.*), /${segment}
+
+        - id: product-service
+          uri: https://productservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/product-service/**
+          filters:
+            - RewritePath=/product-service/(?<segment>.*), /${segment}
+
+        - id: cart-service
+          uri: https://cartservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/cart-service/**
+          filters:
+            - RewritePath=/cart-service/(?<segment>.*), /${segment}
+
+        - id: shipping-service
+          uri: https://shippingservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/shipping-service/**
+          filters:
+            - RewritePath=/shipping-service/(?<segment>.*), /${segment}
+
+        - id: payment-service
+          uri: https://paymentservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/payment-service/**
+          filters:
+            - RewritePath=/payment-service/(?<segment>.*), /${segment}
+
+        - id: order-service
+          uri: https://orderservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/order-service/**
+          filters:
+            - RewritePath=/order-service/(?<segment>.*), /${segment}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: User Service
+        url: /user-service/v3/api-docs
+
+      - name: Product Service
+        url: /product-service/v3/api-docs
+
+      - name: Cart Service
+        url: /cart-service/v3/api-docs
+
+      - name: Shipping Service
+        url: /shipping-service/v3/api-docs
+
+      - name: Payment Service
+        url: /payment-service/v3/api-docs
+
+      - name: Order Service
+        url: /order-service/v3/api-docs
