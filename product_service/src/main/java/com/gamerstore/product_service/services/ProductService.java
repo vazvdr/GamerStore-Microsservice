@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.gamerstore.product_service.dto.ProductResponseDTO;
@@ -24,6 +25,7 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    @Cacheable(value = "products", key = "'all'")
     public List<ProductResponseDTO> findAll() {
         return productRepository.findAll()
                 .stream()
@@ -31,6 +33,7 @@ public class ProductService {
                 .toList();
     }
 
+    @Cacheable(value = "products", key = "#id")
     public ProductResponseDTO findById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado com id: " + id));

@@ -16,6 +16,17 @@ spring:
   rabbitmq:
     addresses: ${RABBITMQ_PRIVATE_URL}
 
+  data:
+    redis:
+      host: ${REDISHOST}
+      port: ${REDISPORT}
+      password: ${REDISPASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+
+  cache:
+    type: redis
+
 springdoc:
   api-docs:
     enabled: true
