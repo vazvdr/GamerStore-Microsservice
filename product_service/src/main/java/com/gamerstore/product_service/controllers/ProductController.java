@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,12 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso")
     })
     @GetMapping
-    public List<ProductResponseDTO> findAll() {
-        return productService.findAll();
+    public ResponseEntity<List<ProductResponseDTO>> findAll() {
+        List<ProductResponseDTO> products = productService.findAll();
+
+        return ResponseEntity.ok()
+                .header("Cache-Control", "public, max-age=300, s-maxage=600")
+                .body(products);
     }
 
     @Operation(summary = "Buscar produto por ID")
@@ -37,8 +43,12 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Produto não encontrado")
     })
     @GetMapping("/{id}")
-    public ProductResponseDTO findById(@PathVariable Long id) {
-        return productService.findById(id);
+    public ResponseEntity<ProductResponseDTO> findById(@PathVariable Long id) {
+        ProductResponseDTO product = productService.findById(id);
+
+        return ResponseEntity.ok()
+                .header("Cache-Control", "public, max-age=600, s-maxage=1200")
+                .body(product);
     }
 
     @Operation(summary = "Busca geral de produtos", description = """
