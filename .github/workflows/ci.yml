@@ -1,4 +1,4 @@
-name: CI - Build & Test GamerStore
+name: CI/CD - GamerStore
 
 on:
   push:
@@ -7,8 +7,23 @@ on:
     branches: ["main"]
 
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [
+          api_gateway,
+          cart_service,
+          email_service,
+          gamerstore-shared,
+          order_service,
+          payment_service,
+          product_service,
+          shipping_service,
+          user_service
+        ]
 
     steps:
       - name: 🧩 Checkout código
@@ -21,5 +36,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: ⚙️ Build completo + testes
-        run: mvn clean verify -B
+      # 🔍 Detecta se o serviço mudou
+      - name: 🔎 Verificar mudanças
+        id: changes
+        run: |
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^${{ matrix.service }}/"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 🧪 Testes (somente se mudou)
+      - name: 🧪 Rodar testes
+        if: steps.changes.outputs.changed == 'true'
+        run: mvn -pl ${{ matrix.service }} -am test -DfailIfNoTests=false
+
+      # 🚀 Deploy (somente se testes passaram)
+      - name: 🚀 Deploy no Railway
+        if: steps.changes.outputs.changed == 'true' && success()
+        run: npx railway up --service ${{ matrix.service }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
