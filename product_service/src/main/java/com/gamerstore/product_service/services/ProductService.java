@@ -9,20 +9,32 @@ import org.springframework.stereotype.Service;
 
 import com.gamerstore.product_service.dto.ProductResponseDTO;
 import com.gamerstore.product_service.entity.Product;
+import com.gamerstore.product_service.entity.elastic.ProductDocument;
+import com.gamerstore.product_service.mapper.ProductElasticMapper;
 import com.gamerstore.product_service.mapper.ProductMapper;
 import com.gamerstore.product_service.repositories.ProductRepository;
-import com.gamerstore.product_service.utils.TextNormalizer;
+import com.gamerstore.product_service.repositories.elastic.ProductElasticRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
-
+    private final ProductElasticRepository elasticRepository;
+    private final ProductElasticMapper productElasticMapper;
     // Idempotência: controla eventos processados
     private final Set<String> processedEvents = ConcurrentHashMap.newKeySet();
 
-    public ProductService(ProductRepository productRepository) {
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
+
+    public ProductService(ProductRepository productRepository,
+            ProductElasticRepository elasticRepository,
+            ProductElasticMapper productElasticMapper) {
         this.productRepository = productRepository;
+        this.elasticRepository = elasticRepository;
+        this.productElasticMapper = productElasticMapper;
     }
 
     @Cacheable(value = "products", key = "'all'")
@@ -41,45 +53,45 @@ public class ProductService {
     }
 
     public List<ProductResponseDTO> search(String query) {
-        String normalizedQuery = TextNormalizer.normalize(query);
 
-        return productRepository.findAll()
+        long start = System.currentTimeMillis();
+
+        log.info("🔍 Iniciando busca por: '{}'", query);
+
+        // 1. Busca no Elastic
+        List<Long> productIds = elasticRepository
+                .findByNameContainingOrDescriptionContainingOrBrandContainingOrModelContainingOrTagsContaining(
+                        query, query, query, query, query)
                 .stream()
-                .filter(product -> {
+                .map(ProductDocument::getId)
+                .toList();
 
-                    // Texto completo para busca (string)
-                    String searchableText = String.join(" ",
-                            product.getName() != null ? product.getName() : "",
-                            product.getBrand() != null ? product.getBrand() : "",
-                            product.getModel() != null ? product.getModel() : "",
-                            product.getDescription() != null ? product.getDescription() : "",
-                            product.getTags() != null ? product.getTags() : "");
+        long elasticTime = System.currentTimeMillis();
 
-                    String normalizedProductText = TextNormalizer.normalize(searchableText);
+        log.info("⚡ ElasticSearch retornou {} IDs em {} ms",
+                productIds.size(),
+                (elasticTime - start));
 
-                    // Busca textual (nome, descrição, marca, etc)
-                    boolean matchesText = normalizedProductText.contains(normalizedQuery);
+        if (productIds.isEmpty()) {
+            log.warn("❌ Nenhum produto encontrado no Elastic para: '{}'", query);
+            return List.of();
+        }
 
-                    // Busca por ID (se for número)
-                    boolean matchesId = false;
-                    try {
-                        Long queryId = Long.parseLong(query);
-                        matchesId = product.getId().equals(queryId);
-                    } catch (NumberFormatException ignored) {
-                    }
-
-                    // Busca por preço (ex: "5000")
-                    boolean matchesPrice = false;
-                    try {
-                        Double queryPrice = Double.parseDouble(query);
-                        matchesPrice = product.getPrice().equals(queryPrice);
-                    } catch (NumberFormatException ignored) {
-                    }
-
-                    return matchesText || matchesId || matchesPrice;
-                })
+        // 2. Busca no banco
+        List<ProductResponseDTO> result = productRepository.findAllById(productIds)
+                .stream()
                 .map(ProductMapper::toDTO)
                 .toList();
+
+        long end = System.currentTimeMillis();
+
+        log.info("💾 PostgreSQL retornou {} produtos em {} ms",
+                result.size(),
+                (end - elasticTime));
+
+        log.info("🚀 Tempo total da busca: {} ms", (end - start));
+
+        return result;
     }
 
     public void reduceStock(Long productId, Integer quantity) {
