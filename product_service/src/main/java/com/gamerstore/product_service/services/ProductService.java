@@ -40,7 +40,7 @@ public class ProductService {
         return ProductMapper.toDTO(product);
     }
 
-    @Cacheable(value = "product-search", key = "T(TextNormalizer).normalize(#query)")
+    @Cacheable(value = "product-search", key = "#query")
     public List<ProductResponseDTO> search(String query) {
 
         String normalizedQuery = TextNormalizer.normalize(query);
