@@ -40,44 +40,13 @@ public class ProductService {
         return ProductMapper.toDTO(product);
     }
 
+    @Cacheable(value = "product-search", key = "T(TextNormalizer).normalize(#query)")
     public List<ProductResponseDTO> search(String query) {
+
         String normalizedQuery = TextNormalizer.normalize(query);
 
-        return productRepository.findAll()
+        return productRepository.searchGeneral(normalizedQuery)
                 .stream()
-                .filter(product -> {
-
-                    // Texto completo para busca (string)
-                    String searchableText = String.join(" ",
-                            product.getName() != null ? product.getName() : "",
-                            product.getBrand() != null ? product.getBrand() : "",
-                            product.getModel() != null ? product.getModel() : "",
-                            product.getDescription() != null ? product.getDescription() : "",
-                            product.getTags() != null ? product.getTags() : "");
-
-                    String normalizedProductText = TextNormalizer.normalize(searchableText);
-
-                    // Busca textual (nome, descrição, marca, etc)
-                    boolean matchesText = normalizedProductText.contains(normalizedQuery);
-
-                    // Busca por ID (se for número)
-                    boolean matchesId = false;
-                    try {
-                        Long queryId = Long.parseLong(query);
-                        matchesId = product.getId().equals(queryId);
-                    } catch (NumberFormatException ignored) {
-                    }
-
-                    // Busca por preço (ex: "5000")
-                    boolean matchesPrice = false;
-                    try {
-                        Double queryPrice = Double.parseDouble(query);
-                        matchesPrice = product.getPrice().equals(queryPrice);
-                    } catch (NumberFormatException ignored) {
-                    }
-
-                    return matchesText || matchesId || matchesPrice;
-                })
                 .map(ProductMapper::toDTO)
                 .toList();
     }

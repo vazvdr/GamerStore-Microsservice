@@ -9,14 +9,14 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
-        SELECT p FROM Product p
-        WHERE
-            LOWER(p.name) LIKE LOWER(CONCAT('%', :term, '%'))
-            OR LOWER(p.description) LIKE LOWER(CONCAT('%', :term, '%'))
-            OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :term, '%'))
-            OR LOWER(p.model) LIKE LOWER(CONCAT('%', :term, '%'))
-            OR LOWER(p.tags) LIKE LOWER(CONCAT('%', :term, '%'))
-            OR CAST(p.price AS string) LIKE CONCAT('%', :term, '%')
-    """)
+                SELECT p FROM Product p
+                WHERE
+                    LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR LOWER(FUNCTION('unaccent', p.description)) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR LOWER(FUNCTION('unaccent', p.brand)) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR LOWER(FUNCTION('unaccent', p.model)) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR LOWER(FUNCTION('unaccent', p.tags)) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR CAST(p.price AS string) LIKE CONCAT('%', :term, '%')
+            """)
     List<Product> searchGeneral(@Param("term") String term);
 }
