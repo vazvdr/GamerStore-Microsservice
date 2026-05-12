@@ -35,6 +35,7 @@
         <module>payment_service</module>   
         <module>order_service</module>   
         <module>email_service</module>   
+        <module>suggestion_service</module>   
     </modules>
 
 </project>
