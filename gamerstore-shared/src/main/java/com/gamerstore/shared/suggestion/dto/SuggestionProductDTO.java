@@ -18,7 +18,9 @@ public record SuggestionProductDTO(
 
         String tags,
 
-        BigDecimal price
+        BigDecimal price,
+
+        Integer stock
 
 ) {
 }
