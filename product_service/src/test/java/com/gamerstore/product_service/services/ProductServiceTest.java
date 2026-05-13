@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.gamerstore.product_service.dto.ProductPageResponseDTO;
 import com.gamerstore.product_service.dto.ProductResponseDTO;
 import com.gamerstore.product_service.entity.Product;
 import com.gamerstore.product_service.repositories.ProductRepository;
@@ -26,370 +27,353 @@ import com.gamerstore.product_service.repositories.ProductRepository;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
-    @Mock
-    private ProductRepository productRepository;
+        @Mock
+        private ProductRepository productRepository;
 
-    @InjectMocks
-    private ProductService productService;
+        @InjectMocks
+        private ProductService productService;
 
-    // ===============================
-    // 🔽 FIND ALL PAGINADO
-    // ===============================
+        // ===============================
+        // 🔽 FIND ALL PAGINADO
+        // ===============================
 
-    @Test
-    @DisplayName("findAll | Deve retornar página vazia quando não houver produtos")
-    void findAll_shouldReturnEmptyPage() {
+        @Test
+        @DisplayName("findAll | Deve retornar página vazia quando não houver produtos")
+        void findAll_shouldReturnEmptyPage() {
 
-        Page<Product> emptyPage = Page.empty();
+                Page<Product> emptyPage = Page.empty();
 
-        when(productRepository.findAll(any(Pageable.class)))
-                .thenReturn(emptyPage);
+                when(productRepository.findAll(any(Pageable.class)))
+                                .thenReturn(emptyPage);
 
-        Page<ProductResponseDTO> result =
-                productService.findAll(0, 8);
+                ProductPageResponseDTO result = productService.findAll(0, 8);
 
-        assertNotNull(result);
+                assertNotNull(result);
 
-        assertTrue(result.isEmpty());
+                assertTrue(result.products().isEmpty());
 
-        verify(productRepository, times(1))
-                .findAll(any(Pageable.class));
-    }
+                verify(productRepository, times(1))
+                                .findAll(any(Pageable.class));
+        }
 
-    @Test
-    @DisplayName("findAll | Deve retornar página de produtos mapeados")
-    void findAll_shouldReturnProductPage() {
+        @Test
+        @DisplayName("findAll | Deve retornar página de produtos mapeados")
+        void findAll_shouldReturnProductPage() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        Page<Product> productPage =
-                new PageImpl<>(List.of(product));
+                Page<Product> productPage = new PageImpl<>(List.of(product));
 
-        when(productRepository.findAll(any(Pageable.class)))
-                .thenReturn(productPage);
+                when(productRepository.findAll(any(Pageable.class)))
+                                .thenReturn(productPage);
 
-        Page<ProductResponseDTO> result =
-                productService.findAll(0, 8);
+                ProductPageResponseDTO result = productService.findAll(0, 8);
 
-        assertEquals(1, result.getContent().size());
+                assertEquals(1, result.products().size());
 
-        assertEquals(
-                product.getName(),
-                result.getContent().get(0).name()
-        );
+                assertEquals(
+                                product.getName(),
+                                result.products().get(0).name());
 
-        verify(productRepository, times(1))
-                .findAll(any(Pageable.class));
-    }
+                verify(productRepository, times(1))
+                                .findAll(any(Pageable.class));
+        }
 
-    // ===============================
-    // 🔽 FIND BY ID
-    // ===============================
+        // ===============================
+        // 🔽 FIND BY ID
+        // ===============================
 
-    @Test
-    @DisplayName("findById | Deve retornar produto quando existir")
-    void findById_shouldReturnProduct() {
+        @Test
+        @DisplayName("findById | Deve retornar produto quando existir")
+        void findById_shouldReturnProduct() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        ProductResponseDTO dto =
-                productService.findById(1L);
+                ProductResponseDTO dto = productService.findById(1L);
 
-        assertNotNull(dto);
+                assertNotNull(dto);
 
-        assertEquals(
-                product.getName(),
-                dto.name()
-        );
+                assertEquals(
+                                product.getName(),
+                                dto.name());
 
-        verify(productRepository, times(1))
-                .findById(1L);
-    }
+                verify(productRepository, times(1))
+                                .findById(1L);
+        }
 
-    @Test
-    @DisplayName("findById | Deve lançar exceção quando produto não existir")
-    void findById_shouldThrowExceptionWhenNotFound() {
+        @Test
+        @DisplayName("findById | Deve lançar exceção quando produto não existir")
+        void findById_shouldThrowExceptionWhenNotFound() {
 
-        when(productRepository.findById(99L))
-                .thenReturn(Optional.empty());
+                when(productRepository.findById(99L))
+                                .thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> productService.findById(99L)
-        );
+                RuntimeException exception = assertThrows(
+                                RuntimeException.class,
+                                () -> productService.findById(99L));
 
-        assertEquals(
-                "Produto não encontrado com id: 99",
-                exception.getMessage()
-        );
+                assertEquals(
+                                "Produto não encontrado com id: 99",
+                                exception.getMessage());
 
-        verify(productRepository, times(1))
-                .findById(99L);
-    }
+                verify(productRepository, times(1))
+                                .findById(99L);
+        }
 
-    // ===============================
-    // 🔽 SEARCH
-    // ===============================
+        // ===============================
+        // 🔽 SEARCH
+        // ===============================
 
-    @Test
-    @DisplayName("search | Deve retornar produtos que correspondem ao termo")
-    void search_shouldReturnMatchingProducts() {
+        @Test
+        @DisplayName("search | Deve retornar produtos que correspondem ao termo")
+        void search_shouldReturnMatchingProducts() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        when(productRepository.searchGeneral(anyString()))
-                .thenReturn(List.of(product));
+                when(productRepository.searchGeneral(anyString()))
+                                .thenReturn(List.of(product));
 
-        List<ProductResponseDTO> result =
-                productService.search("logitech");
+                List<ProductResponseDTO> result = productService.search("logitech");
 
-        assertEquals(1, result.size());
+                assertEquals(1, result.size());
 
-        assertEquals(
-                product.getName(),
-                result.get(0).name()
-        );
+                assertEquals(
+                                product.getName(),
+                                result.get(0).name());
 
-        verify(productRepository, times(1))
-                .searchGeneral(anyString());
-    }
+                verify(productRepository, times(1))
+                                .searchGeneral(anyString());
+        }
 
-    @Test
-    @DisplayName("search | Deve ignorar acentos e letras maiúsculas")
-    void search_shouldIgnoreAccentsAndCase() {
+        @Test
+        @DisplayName("search | Deve ignorar acentos e letras maiúsculas")
+        void search_shouldIgnoreAccentsAndCase() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setName("Tecládo Mecânico");
+                product.setName("Tecládo Mecânico");
 
-        when(productRepository.searchGeneral(anyString()))
-                .thenReturn(List.of(product));
+                when(productRepository.searchGeneral(anyString()))
+                                .thenReturn(List.of(product));
 
-        List<ProductResponseDTO> result =
-                productService.search("teclado");
+                List<ProductResponseDTO> result = productService.search("teclado");
 
-        assertEquals(1, result.size());
+                assertEquals(1, result.size());
 
-        verify(productRepository, times(1))
-                .searchGeneral(anyString());
-    }
+                verify(productRepository, times(1))
+                                .searchGeneral(anyString());
+        }
 
-    @Test
-    @DisplayName("search | Deve retornar lista vazia quando não houver match")
-    void search_shouldReturnEmptyListWhenNoMatch() {
+        @Test
+        @DisplayName("search | Deve retornar lista vazia quando não houver match")
+        void search_shouldReturnEmptyListWhenNoMatch() {
 
-        when(productRepository.searchGeneral(anyString()))
-                .thenReturn(List.of());
+                when(productRepository.searchGeneral(anyString()))
+                                .thenReturn(List.of());
 
-        List<ProductResponseDTO> result =
-                productService.search("monitor");
+                List<ProductResponseDTO> result = productService.search("monitor");
 
-        assertTrue(result.isEmpty());
+                assertTrue(result.isEmpty());
 
-        verify(productRepository, times(1))
-                .searchGeneral(anyString());
-    }
+                verify(productRepository, times(1))
+                                .searchGeneral(anyString());
+        }
 
-    // ===============================
-    // 🔽 REDUCE STOCK
-    // ===============================
+        // ===============================
+        // 🔽 REDUCE STOCK
+        // ===============================
 
-    @Test
-    @DisplayName("reduceStock | Deve reduzir o estoque corretamente")
-    void reduceStock_shouldDecreaseStock() {
+        @Test
+        @DisplayName("reduceStock | Deve reduzir o estoque corretamente")
+        void reduceStock_shouldDecreaseStock() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(10);
+                product.setStock(10);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        productService.reduceStock(1L, 3);
+                productService.reduceStock(1L, 3);
 
-        assertEquals(7, product.getStock());
+                assertEquals(7, product.getStock());
 
-        verify(productRepository, times(1))
-                .save(product);
-    }
+                verify(productRepository, times(1))
+                                .save(product);
+        }
 
-    @Test
-    @DisplayName("reduceStock | Deve lançar exceção quando produto não existir")
-    void reduceStock_shouldThrowWhenProductNotFound() {
+        @Test
+        @DisplayName("reduceStock | Deve lançar exceção quando produto não existir")
+        void reduceStock_shouldThrowWhenProductNotFound() {
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.empty());
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.empty());
 
-        assertThrows(
-                RuntimeException.class,
-                () -> productService.reduceStock(1L, 1)
-        );
-    }
+                assertThrows(
+                                RuntimeException.class,
+                                () -> productService.reduceStock(1L, 1));
+        }
 
-    // ===============================
-    // 🔽 RESERVE STOCK
-    // ===============================
+        // ===============================
+        // 🔽 RESERVE STOCK
+        // ===============================
 
-    @Test
-    @DisplayName("reserveStock | Deve reservar estoque corretamente")
-    void reserveStock_shouldDecreaseStock() {
+        @Test
+        @DisplayName("reserveStock | Deve reservar estoque corretamente")
+        void reserveStock_shouldDecreaseStock() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(10);
+                product.setStock(10);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        String eventId = "reserve-test-1";
+                String eventId = "reserve-test-1";
 
-        productService.reserveStock(1L, 3, eventId);
+                productService.reserveStock(1L, 3, eventId);
 
-        assertEquals(7, product.getStock());
+                assertEquals(7, product.getStock());
 
-        verify(productRepository, times(1))
-                .save(product);
-    }
+                verify(productRepository, times(1))
+                                .save(product);
+        }
 
-    @Test
-    @DisplayName("reserveStock | Não deve processar evento duplicado")
-    void reserveStock_shouldNotProcessDuplicateEvent() {
+        @Test
+        @DisplayName("reserveStock | Não deve processar evento duplicado")
+        void reserveStock_shouldNotProcessDuplicateEvent() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(10);
+                product.setStock(10);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        String eventId = "reserve-test-dup";
+                String eventId = "reserve-test-dup";
 
-        productService.reserveStock(1L, 3, eventId);
+                productService.reserveStock(1L, 3, eventId);
 
-        productService.reserveStock(1L, 3, eventId);
+                productService.reserveStock(1L, 3, eventId);
 
-        verify(productRepository, times(1))
-                .save(product);
-    }
+                verify(productRepository, times(1))
+                                .save(product);
+        }
 
-    @Test
-    @DisplayName("reserveStock | Deve lançar exceção quando estoque insuficiente")
-    void reserveStock_shouldThrowWhenInsufficientStock() {
+        @Test
+        @DisplayName("reserveStock | Deve lançar exceção quando estoque insuficiente")
+        void reserveStock_shouldThrowWhenInsufficientStock() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(2);
+                product.setStock(2);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        String eventId = "reserve-test-insufficient";
+                String eventId = "reserve-test-insufficient";
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
-                () -> productService.reserveStock(1L, 5, eventId)
-        );
+                RuntimeException ex = assertThrows(
+                                RuntimeException.class,
+                                () -> productService.reserveStock(1L, 5, eventId));
 
-        assertTrue(
-                ex.getMessage().contains("Estoque insuficiente")
-        );
-    }
+                assertTrue(
+                                ex.getMessage().contains("Estoque insuficiente"));
+        }
 
-    @Test
-    @DisplayName("reserveStock | Deve lançar exceção quando produto não existir")
-    void reserveStock_shouldThrowWhenProductNotFound() {
+        @Test
+        @DisplayName("reserveStock | Deve lançar exceção quando produto não existir")
+        void reserveStock_shouldThrowWhenProductNotFound() {
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.empty());
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.empty());
 
-        String eventId = "reserve-test-nofound";
+                String eventId = "reserve-test-nofound";
 
-        assertThrows(
-                RuntimeException.class,
-                () -> productService.reserveStock(1L, 1, eventId)
-        );
-    }
+                assertThrows(
+                                RuntimeException.class,
+                                () -> productService.reserveStock(1L, 1, eventId));
+        }
 
-    // ===============================
-    // 🔓 RELEASE RESERVATION
-    // ===============================
+        // ===============================
+        // 🔓 RELEASE RESERVATION
+        // ===============================
 
-    @Test
-    @DisplayName("releaseReservation | Deve liberar estoque corretamente")
-    void releaseReservation_shouldIncreaseStock() {
+        @Test
+        @DisplayName("releaseReservation | Deve liberar estoque corretamente")
+        void releaseReservation_shouldIncreaseStock() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(5);
+                product.setStock(5);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        String eventId = "release-test-1";
+                String eventId = "release-test-1";
 
-        productService.releaseReservation(1L, 3, eventId);
+                productService.releaseReservation(1L, 3, eventId);
 
-        assertEquals(8, product.getStock());
+                assertEquals(8, product.getStock());
 
-        verify(productRepository, times(1))
-                .save(product);
-    }
+                verify(productRepository, times(1))
+                                .save(product);
+        }
 
-    @Test
-    @DisplayName("releaseReservation | Não deve processar evento duplicado")
-    void releaseReservation_shouldNotProcessDuplicateEvent() {
+        @Test
+        @DisplayName("releaseReservation | Não deve processar evento duplicado")
+        void releaseReservation_shouldNotProcessDuplicateEvent() {
 
-        Product product = mockProduct();
+                Product product = mockProduct();
 
-        product.setStock(5);
+                product.setStock(5);
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.of(product));
 
-        String eventId = "release-test-dup";
+                String eventId = "release-test-dup";
 
-        productService.releaseReservation(1L, 3, eventId);
+                productService.releaseReservation(1L, 3, eventId);
 
-        productService.releaseReservation(1L, 3, eventId);
+                productService.releaseReservation(1L, 3, eventId);
 
-        verify(productRepository, times(1))
-                .save(product);
-    }
+                verify(productRepository, times(1))
+                                .save(product);
+        }
 
-    @Test
-    @DisplayName("releaseReservation | Deve lançar exceção quando produto não existir")
-    void releaseReservation_shouldThrowWhenProductNotFound() {
+        @Test
+        @DisplayName("releaseReservation | Deve lançar exceção quando produto não existir")
+        void releaseReservation_shouldThrowWhenProductNotFound() {
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.empty());
+                when(productRepository.findById(1L))
+                                .thenReturn(Optional.empty());
 
-        String eventId = "release-test-nofound";
+                String eventId = "release-test-nofound";
 
-        assertThrows(
-                RuntimeException.class,
-                () -> productService.releaseReservation(1L, 1, eventId)
-        );
-    }
+                assertThrows(
+                                RuntimeException.class,
+                                () -> productService.releaseReservation(1L, 1, eventId));
+        }
 
-    // ===============================
-    // 🔧 MOCK PRODUCT
-    // ===============================
+        // ===============================
+        // 🔧 MOCK PRODUCT
+        // ===============================
 
-    private Product mockProduct() {
+        private Product mockProduct() {
 
-        Product product = new Product();
+                Product product = new Product();
 
-        product.setId(1L);
-        product.setName("Mouse Gamer");
-        product.setBrand("Logitech");
-        product.setModel("G502");
-        product.setDescription("Mouse gamer profissional");
-        product.setTags("mouse gamer fps");
-        product.setStock(10);
+                product.setId(1L);
+                product.setName("Mouse Gamer");
+                product.setBrand("Logitech");
+                product.setModel("G502");
+                product.setDescription("Mouse gamer profissional");
+                product.setTags("mouse gamer fps");
+                product.setStock(10);
 
-        return product;
-    }
+                return product;
+        }
 }

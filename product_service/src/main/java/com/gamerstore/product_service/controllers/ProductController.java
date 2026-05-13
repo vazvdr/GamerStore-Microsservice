@@ -1,5 +1,6 @@
 package com.gamerstore.product_service.controllers;
 
+import com.gamerstore.product_service.dto.ProductPageResponseDTO;
 import com.gamerstore.product_service.dto.ProductResponseDTO;
 import com.gamerstore.product_service.services.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,12 +30,10 @@ public class ProductController {
                         @ApiResponse(responseCode = "200", description = "Lista de produtos retornada com sucesso")
         })
         @GetMapping
-        public ResponseEntity<Page<ProductResponseDTO>> findAll(
+        public ResponseEntity<ProductPageResponseDTO> findAll(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "8") int size) {
-
-                return ResponseEntity.ok(
-                                productService.findAll(page, size));
+                return ResponseEntity.ok(productService.findAll(page, size));
         }
 
         @Operation(summary = "Buscar produto por ID")

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.gamerstore.product_service.dto.ProductPageResponseDTO;
 import com.gamerstore.product_service.dto.ProductResponseDTO;
 import com.gamerstore.product_service.entity.Product;
 import com.gamerstore.product_service.mapper.ProductMapper;
@@ -28,15 +29,22 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public Page<ProductResponseDTO> findAll(
+    @Cacheable(value = "products", key = "'page:' + #page + ':size:' + #size")
+    public ProductPageResponseDTO findAll(
             int page,
             int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return productRepository
+        Page<ProductResponseDTO> products = productRepository
                 .findAll(pageable)
                 .map(ProductMapper::toDTO);
+
+        return new ProductPageResponseDTO(
+                products.getContent(),
+                products.getNumber(),
+                products.getTotalPages(),
+                products.getTotalElements());
     }
 
     @Cacheable(value = "products", key = "#id")
