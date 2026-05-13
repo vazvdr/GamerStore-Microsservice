@@ -28,7 +28,6 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    @Cacheable(value = "products", key = "'page:' + #page + ':size:' + #size")
     public Page<ProductResponseDTO> findAll(
             int page,
             int size) {
