@@ -2,9 +2,8 @@ package com.gamerstore.product_service.config;
 
 import java.time.Duration;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -24,10 +23,8 @@ public class RedisConfig {
 
                 ObjectMapper objectMapper = new ObjectMapper();
 
-                objectMapper.activateDefaultTyping(
-                                LaissezFaireSubTypeValidator.instance,
-                                ObjectMapper.DefaultTyping.NON_FINAL,
-                                JsonTypeInfo.As.PROPERTY);
+                objectMapper.registerModule(
+                                new JavaTimeModule());
 
                 GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
