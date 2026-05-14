@@ -47,6 +47,13 @@ spring:
           filters:
             - RewritePath=/order-service/(?<segment>.*), /${segment}
 
+        - id: suggestion-service
+          uri: https://suggestionservice-gamerstore.up.railway.app
+          predicates:
+            - Path=/suggestion-service/**
+          filters:
+            - RewritePath=/suggestion-service/(?<segment>.*), /${segment}
+
 springdoc:
   swagger-ui:
     urls:
@@ -67,3 +74,6 @@ springdoc:
 
       - name: Order Service
         url: /order-service/v3/api-docs
+
+      - name: Suggestion Service
+        url: /suggestion-service/v3/api-docs
