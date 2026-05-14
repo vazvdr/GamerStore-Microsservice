@@ -14,103 +14,85 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class SuggestionService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+        private final RedisTemplate<String, Object> redisTemplate;
 
-    private final ProductClient productClient;
+        private final ProductClient productClient;
 
-    public SuggestionService(
-            RedisTemplate<String, Object> redisTemplate,
-            ProductClient productClient
-    ) {
-        this.redisTemplate = redisTemplate;
-        this.productClient = productClient;
-    }
+        public SuggestionService(
+                        RedisTemplate<String, Object> redisTemplate,
+                        ProductClient productClient) {
+                this.redisTemplate = redisTemplate;
+                this.productClient = productClient;
+        }
 
-    public void registerView(ViewRequestDTO dto) {
+        public void registerView(ViewRequestDTO dto) {
 
-        String userKey =
-                "user:" + dto.userId() + ":views";
+                String userKey = "user:" + dto.userId() + ":views";
 
-        String productKey =
-                "product:" + dto.productId() + ":users";
+                String productKey = "product:" + dto.productId() + ":users";
 
-        redisTemplate.opsForSet()
-                .add(userKey, dto.productId());
-
-        redisTemplate.opsForSet()
-                .add(productKey, dto.userId());
-
-        redisTemplate.expire(
-                userKey,
-                30,
-                TimeUnit.DAYS
-        );
-
-        redisTemplate.expire(
-                productKey,
-                30,
-                TimeUnit.DAYS
-        );
-    }
-
-    @Cacheable(
-            value = "suggestions",
-            key = "#productId"
-    )
-    public List<SuggestionProductDTO>
-    suggestProducts(Long productId) {
-
-        String productKey =
-                "product:" + productId + ":users";
-
-        Set<Object> users =
                 redisTemplate.opsForSet()
-                        .members(productKey);
+                                .add(userKey, dto.productId());
 
-        if (users == null || users.isEmpty()) {
-            return Collections.emptyList();
+                redisTemplate.opsForSet()
+                                .add(productKey, dto.userId());
+
+                redisTemplate.expire(
+                                userKey,
+                                30,
+                                TimeUnit.DAYS);
+
+                redisTemplate.expire(
+                                productKey,
+                                30,
+                                TimeUnit.DAYS);
         }
 
-        Map<Long, Integer> frequencyMap =
-                new HashMap<>();
+        @Cacheable(value = "suggestions", key = "#productId")
+        public List<SuggestionProductDTO> suggestProducts(Long productId) {
 
-        for (Object user : users) {
+                String productKey = "product:" + productId + ":users";
 
-            String userKey =
-                    "user:" + user + ":views";
+                Set<Object> users = redisTemplate.opsForSet()
+                                .members(productKey);
 
-            Set<Object> viewedProducts =
-                    redisTemplate.opsForSet()
-                            .members(userKey);
-
-            if (viewedProducts == null) {
-                continue;
-            }
-
-            for (Object viewed : viewedProducts) {
-
-                Long viewedId =
-                        Long.valueOf(viewed.toString());
-
-                if (!viewedId.equals(productId)) {
-
-                    frequencyMap.merge(
-                            viewedId,
-                            1,
-                            Integer::sum
-                    );
+                if (users == null || users.isEmpty()) {
+                        return Collections.emptyList();
                 }
-            }
-        }
 
-        return frequencyMap.entrySet()
-                .stream()
-                .sorted((a, b) ->
-                        b.getValue() - a.getValue())
-                .limit(5)
-                .map(entry ->
-                        productClient.findById(
-                                entry.getKey()))
-                .toList();
-    }
+                Map<Long, Integer> frequencyMap = new HashMap<>();
+
+                for (Object user : users) {
+
+                        String userKey = "user:" + user + ":views";
+
+                        Set<Object> viewedProducts = redisTemplate.opsForSet()
+                                        .members(userKey);
+
+                        if (viewedProducts == null) {
+                                continue;
+                        }
+
+                        for (Object viewed : viewedProducts) {
+
+                                Long viewedId = Long.valueOf(viewed.toString());
+
+                                if (!viewedId.equals(productId)) {
+
+                                        frequencyMap.merge(
+                                                        viewedId,
+                                                        1,
+                                                        Integer::sum);
+                                }
+                        }
+                }
+
+                return frequencyMap.entrySet()
+                                .stream()
+                                .sorted((a, b) -> b.getValue() - a.getValue())
+                                .limit(5)
+                                .map(entry -> productClient.findById(
+                                                entry.getKey()))
+                                .toList();
+        }
 }
