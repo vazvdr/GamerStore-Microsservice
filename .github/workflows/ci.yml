@@ -13,27 +13,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [
-          api_gateway,
-          cart_service,
-          email_service,
-          gamerstore-shared,
-          order_service,
-          payment_service,
-          product_service,
-          shipping_service,
-          user_service
-        ]
+        service:
+          [
+            api_gateway,
+            cart_service,
+            email_service,
+            gamerstore-shared,
+            order_service,
+            payment_service,
+            product_service,
+            shipping_service,
+            suggestion_service,
+            user_service,
+          ]
 
     steps:
       - name: 🧩 Checkout código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: ☕ Instalar Java 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
           cache: maven
 
       # 🔍 Detecta se o serviço mudou
@@ -51,9 +55,15 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         run: mvn -pl ${{ matrix.service }} -am test -DfailIfNoTests=false
 
-      # 🚀 Deploy (somente se testes passaram)
-      - name: 🚀 Deploy no Railway
+      # 📦 Instalar Railway CLI somente se houver mudança
+      - name: 📦 Instalar Railway CLI
         if: steps.changes.outputs.changed == 'true' && success()
-        run: npx railway up --service ${{ matrix.service }}
+        run: npm install -g @railway/cli
+
+      # 🚀 Deploy somente do serviço alterado
+      - name: 🚀 Deploy no Railway
+        if: github.ref == 'refs/heads/main' && steps.changes.outputs.changed == 'true' && success()
+        working-directory: ./${{ matrix.service }}
+        run: railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
